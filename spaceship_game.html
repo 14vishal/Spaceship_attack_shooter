@@ -3,33 +3,36 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
-        this.gameState = {
-            running: true,
-            paused: false,
-            score: 0,
-            lives: 3,
-            level: 1,
-            lastTime: 0
-        };
+        // game state stuff
+        this.running = true;
+        this.paused = false;
+        this.score = 0;
+        this.lives = 3;
+        this.level = 1;
         
         this.keys = {};
         this.bullets = [];
         this.monsters = [];
         this.particles = [];
-        this.powerUps = [];
+        // this.powerUps = []; // maybe add this later
         
         this.player = new Player(this.canvas.width, this.canvas.height);
         
-        this.setupEventListeners();
-        this.createStars();
+        this.setupControls();
+        this.makeStars();
     }
     
-    setupEventListeners() {
+    setupControls() {
+        // handle keyboard input
         document.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
+            
+            // pause with P key
             if (e.key === 'p' || e.key === 'P') {
-                this.gameState.paused = !this.gameState.paused;
+                this.paused = !this.paused;
             }
+            
+            // prevent spacebar from scrolling page
             if (e.key === ' ') {
                 e.preventDefault();
             }
@@ -40,168 +43,228 @@ class Game {
         });
     }
     
-    createStars() {
-        const starsContainer = document.getElementById('stars');
+    makeStars() {
+        // create background stars
+        let starsDiv = document.getElementById('stars');
         for (let i = 0; i < 50; i++) {
-            const star = document.createElement('div');
+            let star = document.createElement('div');
             star.className = 'star';
             star.style.left = Math.random() * 100 + '%';
             star.style.top = Math.random() * 100 + '%';
-            star.style.width = Math.random() * 3 + 1 + 'px';
-            star.style.height = star.style.width;
+            let size = Math.random() * 3 + 1;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
             star.style.animationDelay = Math.random() * 2 + 's';
-            starsContainer.appendChild(star);
+            starsDiv.appendChild(star);
         }
     }
     
-    spawnMonster() {
-        const x = Math.random() * (this.canvas.width - 100) + 50;
-        const types = ['basic', 'fast'];
-        if (this.gameState.level >= 3 && Math.random() < 0.1) types.push('boss');
-        const type = types[Math.floor(Math.random() * types.length)];
-        this.monsters.push(new Monster(x, -50, type));
+    addMonster() {
+        // spawn a new monster at random x position
+        let x = Math.random() * (this.canvas.width - 100) + 50;
+        let monsterTypes = ['basic', 'fast'];
+        
+        // add boss monsters after level 3
+        if (this.level >= 3 && Math.random() < 0.1) {
+            monsterTypes.push('boss');
+        }
+        
+        let randomType = monsterTypes[Math.floor(Math.random() * monsterTypes.length)];
+        this.monsters.push(new Monster(x, -50, randomType));
     }
     
-    createExplosion(x, y, color, count = 15) {
+    makeExplosion(x, y, color, particleCount) {
+        // create explosion particles
+        let count = particleCount || 15;
         for (let i = 0; i < count; i++) {
-            const angle = (Math.PI * 2 * i) / count;
-            const speed = Math.random() * 5 + 2;
-            this.particles.push(new Particle(
-                x, y,
-                Math.cos(angle) * speed,
-                Math.sin(angle) * speed,
-                color,
-                30 + Math.random() * 20
-            ));
+            let angle = (Math.PI * 2 * i) / count;
+            let speed = Math.random() * 5 + 2;
+            let vx = Math.cos(angle) * speed;
+            let vy = Math.sin(angle) * speed;
+            let life = 30 + Math.random() * 20;
+            
+            this.particles.push(new Particle(x, y, vx, vy, color, life));
         }
     }
     
-    checkCollisions() {
-        this.bullets.forEach((bullet, bIndex) => {
-            if (bullet.color === '#00ffff') {
-                this.monsters.forEach((monster, mIndex) => {
-                    const dx = bullet.x - monster.x;
-                    const dy = bullet.y - monster.y;
-                    const distance = Math.sqrt(dx*dx + dy*dy);
+    checkHits() {
+        // check bullet vs monster collisions
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+            let bullet = this.bullets[i];
+            
+            // only check player bullets hitting monsters
+            if (bullet.color === 'cyan' || bullet.color === '#00ffff') {
+                for (let j = this.monsters.length - 1; j >= 0; j--) {
+                    let monster = this.monsters[j];
+                    let dx = bullet.x - monster.x;
+                    let dy = bullet.y - monster.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
                     
                     if (distance < monster.size/2 + bullet.size) {
-                        this.bullets.splice(bIndex, 1);
+                        // hit!
+                        this.bullets.splice(i, 1);
                         monster.health--;
                         
                         if (monster.health <= 0) {
-                            this.createExplosion(monster.x, monster.y, monster.color);
-                            this.monsters.splice(mIndex, 1);
-                            this.gameState.score += monster.type === 'boss' ? 100 : monster.type === 'fast' ? 30 : 50;
+                            // monster destroyed
+                            this.makeExplosion(monster.x, monster.y, monster.color);
+                            this.monsters.splice(j, 1);
+                            
+                            // scoring
+                            if (monster.type === 'boss') {
+                                this.score += 100;
+                            } else if (monster.type === 'fast') {
+                                this.score += 30;
+                            } else {
+                                this.score += 50;
+                            }
                         }
+                        break; // bullet can only hit one monster
                     }
-                });
+                }
             } else {
-                const dx = bullet.x - this.player.x;
-                const dy = bullet.y - this.player.y;
-                const distance = Math.sqrt(dx*dx + dy*dy);
+                // enemy bullet vs player
+                let dx = bullet.x - this.player.x;
+                let dy = bullet.y - this.player.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
                 
                 if (distance < 20 + bullet.size && this.player.invulnerable <= 0) {
-                    this.bullets.splice(bIndex, 1);
-                    this.gameState.lives--;
-                    this.player.invulnerable = 120;
-                    this.createExplosion(this.player.x, this.player.y, '#00ffff');
-                    
-                    if (this.gameState.lives <= 0) {
-                        this.gameOver();
-                    }
+                    this.bullets.splice(i, 1);
+                    this.playerHit();
                 }
             }
-        });
+        }
         
-        this.monsters.forEach((monster, mIndex) => {
-            const dx = monster.x - this.player.x;
-            const dy = monster.y - this.player.y;
-            const distance = Math.sqrt(dx*dx + dy*dy);
+        // check monster vs player collisions
+        for (let i = this.monsters.length - 1; i >= 0; i--) {
+            let monster = this.monsters[i];
+            let dx = monster.x - this.player.x;
+            let dy = monster.y - this.player.y;
+            let distance = Math.sqrt(dx*dx + dy*dy);
             
             if (distance < monster.size/2 + 20 && this.player.invulnerable <= 0) {
-                this.monsters.splice(mIndex, 1);
-                this.gameState.lives--;
-                this.player.invulnerable = 120;
-                this.createExplosion(monster.x, monster.y, monster.color);
-                this.createExplosion(this.player.x, this.player.y, '#00ffff');
-                
-                if (this.gameState.lives <= 0) {
-                    this.gameOver();
-                }
+                this.monsters.splice(i, 1);
+                this.makeExplosion(monster.x, monster.y, monster.color);
+                this.playerHit();
             }
-        });
+        }
     }
     
-    update() {
+    playerHit() {
+        // player takes damage
+        this.lives--;
+        this.player.invulnerable = 120; // 2 seconds of invulnerability
+        this.makeExplosion(this.player.x, this.player.y, 'cyan');
+        
+        if (this.lives <= 0) {
+            this.endGame();
+        }
+    }
+    
+    updateGame() {
+        // update player
         this.player.update(this.keys);
         this.player.shoot(this.bullets, this.keys);
         
-        this.bullets = this.bullets.filter(bullet => {
-            bullet.update();
-            return bullet.y > -50 && bullet.y < this.canvas.height + 50 && 
-                   bullet.x > -50 && bullet.x < this.canvas.width + 50;
-        });
-        
-        this.monsters = this.monsters.filter(monster => {
-            monster.update(this.player, this.bullets);
-            return monster.y < this.canvas.height + 100;
-        });
-        
-        this.particles = this.particles.filter(particle => {
-            particle.update();
-            return particle.life > 0;
-        });
-        
-        if (Math.random() < 0.02 + this.gameState.level * 0.005) {
-            this.spawnMonster();
+        // update bullets
+        for (let i = this.bullets.length - 1; i >= 0; i--) {
+            this.bullets[i].update();
+            
+            // remove bullets that are off screen
+            let bullet = this.bullets[i];
+            if (bullet.y < -50 || bullet.y > this.canvas.height + 50 || 
+                bullet.x < -50 || bullet.x > this.canvas.width + 50) {
+                this.bullets.splice(i, 1);
+            }
         }
         
-        if (this.gameState.score > this.gameState.level * 500) {
-            this.gameState.level++;
+        // update monsters
+        for (let i = this.monsters.length - 1; i >= 0; i--) {
+            this.monsters[i].update(this.player, this.bullets);
+            
+            // remove monsters that went off screen
+            if (this.monsters[i].y > this.canvas.height + 100) {
+                this.monsters.splice(i, 1);
+            }
         }
         
-        this.checkCollisions();
+        // update particles
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            this.particles[i].update();
+            if (this.particles[i].life <= 0) {
+                this.particles.splice(i, 1);
+            }
+        }
+        
+        // spawn new monsters randomly
+        let spawnChance = 0.02 + this.level * 0.005;
+        if (Math.random() < spawnChance) {
+            this.addMonster();
+        }
+        
+        // level up every 500 points
+        if (this.score > this.level * 500) {
+            this.level++;
+        }
+        
+        this.checkHits();
     }
     
-    render() {
+    drawEverything() {
+        // clear screen
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        this.bullets.forEach(bullet => bullet.draw(this.ctx));
-        this.monsters.forEach(monster => monster.draw(this.ctx));
-        this.particles.forEach(particle => particle.draw(this.ctx));
+        // draw all game objects
+        this.bullets.forEach(bullet => {
+            bullet.draw(this.ctx);
+        });
+        
+        this.monsters.forEach(monster => {
+            monster.draw(this.ctx);
+        });
+        
+        this.particles.forEach(particle => {
+            particle.draw(this.ctx);
+        });
+        
         this.player.draw(this.ctx);
         
-        document.getElementById('score').textContent = this.gameState.score;
-        document.getElementById('lives').textContent = this.gameState.lives;
-        document.getElementById('level').textContent = this.gameState.level;
+        // update UI
+        document.getElementById('score').textContent = this.score;
+        document.getElementById('lives').textContent = this.lives;
+        document.getElementById('level').textContent = this.level;
     }
     
     gameLoop() {
-        if (!this.gameState.running) return;
-        
-        if (!this.gameState.paused) {
-            this.update();
+        if (!this.running) {
+            return; // game over
         }
-        this.render();
         
-        requestAnimationFrame(() => this.gameLoop());
+        if (!this.paused) {
+            this.updateGame();
+        }
+        
+        this.drawEverything();
+        
+        // keep the loop going
+        requestAnimationFrame(() => {
+            this.gameLoop();
+        });
     }
     
-    gameOver() {
-        this.gameState.running = false;
-        document.getElementById('finalScore').textContent = this.gameState.score;
+    endGame() {
+        this.running = false;
+        document.getElementById('finalScore').textContent = this.score;
         document.getElementById('gameOver').style.display = 'block';
     }
     
-    restart() {
-        this.gameState = {
-            running: true,
-            paused: false,
-            score: 0,
-            lives: 3,
-            level: 1,
-            lastTime: 0
-        };
+    restartGame() {
+        // reset everything
+        this.running = true;
+        this.paused = false;
+        this.score = 0;
+        this.lives = 3;
+        this.level = 1;
         
         this.player = new Player(this.canvas.width, this.canvas.height);
         this.bullets = [];
@@ -212,7 +275,7 @@ class Game {
         this.gameLoop();
     }
     
-    start() {
+    startGame() {
         this.gameLoop();
     }
 }
