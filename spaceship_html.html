@@ -1,35 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spaceship Monster Shooter</title>
+    <title>Spaceship Game</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- <link rel="stylesheet" href="old-styles.css"> -->
 </head>
 <body>
-    <div id="gameContainer">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
         <div class="stars" id="stars"></div>
         
-        <div id="ui">
+        <div id="game-ui">
             <div>Score: <span id="score">0</span></div>
             <div>Lives: <span id="lives">3</span></div>
             <div>Level: <span id="level">1</span></div>
+            <!-- <div>High Score: <span id="highscore">0</span></div> -->
         </div>
         
-        <div id="gameOver">
-            <h2>GAME OVER</h2>
-            <p>Final Score: <span id="finalScore">0</span></p>
-            <button onclick="restartGame()">Play Again</button>
+        <div id="game-over" style="display: none;">
+            <h2>GAME OVER!</h2>
+            <p>Your Score: <span id="final-score">0</span></p>
+            <button onclick="restartGame()">Try Again</button>
+            <!-- <button onclick="showHighScores()">High Scores</button> -->
         </div>
         
-        <div id="instructions">
+        <div id="controls">
             <div>WASD or Arrow Keys: Move</div>
             <div>SPACE: Shoot</div>
             <div>P: Pause</div>
         </div>
     </div>
 
+    <!-- load the game scripts -->
     <script src="js/classes.js"></script>
     <script src="js/game.js"></script>
     <script src="js/main.js"></script>
