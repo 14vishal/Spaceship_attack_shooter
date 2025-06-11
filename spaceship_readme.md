@@ -1,8 +1,8 @@
-# Spaceship Game
+Spaceship Game
 
 A simple 2D spaceship shooter game. Dodge monsters and shoot them down to survive as long as possible.
 
-## How to Play
+How to Play
 
 Open `index.html` in your browser and start playing. Move with WASD or arrow keys, shoot with spacebar, and press P to pause.
 
@@ -11,15 +11,15 @@ There are three types of enemies:
 - Yellow hexagon monsters (fast, chase you)
 - Red square bosses (shoot back at you)
 
-You get points for killing monsters and advance levels every 500 points. Try not to die!
+You get points for killing monsters and advancing levels every 500 points. Try not to die!
 
-## Controls
+Controls
 
 - WASD or Arrow Keys: Move
 - Spacebar: Shoot
 - P: Pause
 
-## Files
+Files
 
 - `index.html` - main game page
 - `styles.css` - styling
