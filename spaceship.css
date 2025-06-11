@@ -1,35 +1,37 @@
 body {
     margin: 0;
     padding: 0;
-    background: linear-gradient(135deg, #0c0c0c 0%, #1a0033 50%, #000 100%);
+    /* tried a few different backgrounds, this one looked cool */
+    background: linear-gradient(135deg, #0c0c0c, #1a0033, #000);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    height: 100vh;
     font-family: 'Courier New', monospace;
     overflow: hidden;
 }
 
 #gameContainer {
     position: relative;
-    border: 3px solid #00ffff;
+    border: 3px solid cyan;
     border-radius: 10px;
-    box-shadow: 0 0 30px #00ffff;
+    box-shadow: 0 0 30px cyan;
     background: rgba(0, 0, 0, 0.8);
 }
 
 #gameCanvas {
     display: block;
-    background: radial-gradient(ellipse at center, #001122 0%, #000000 100%);
+    /* background: black; */
+    background: radial-gradient(ellipse at center, #001122, #000);
 }
 
 #ui {
     position: absolute;
     top: 10px;
     left: 10px;
-    color: #00ffff;
+    color: cyan;
     font-size: 18px;
-    text-shadow: 0 0 10px #00ffff;
+    text-shadow: 0 0 10px cyan;
     z-index: 10;
 }
 
@@ -66,16 +68,20 @@ body {
     position: absolute;
     background: white;
     border-radius: 50%;
-    animation: twinkle 2s infinite alternate ;
+    animation: twinkle 2s infinite alternate;
 }
 
 @keyframes twinkle {
-    0% { opacity: 0.3; }
-    100% { opacity: 1; }
+    0% { 
+        opacity: 0.3; 
+    }
+    100% { 
+        opacity: 1; 
+    }
 }
 
 button {
-    background: linear-gradient(45deg, #00ffff, #0066ff);
+    background: linear-gradient(45deg, cyan, #0066ff);
     border: none;
     color: white;
     padding: 10px 20px;
@@ -89,5 +95,5 @@ button {
 
 button:hover {
     transform: scale(1.1);
-    box-shadow: 0 0 20px #00ffff;
+    box-shadow: 0 0 20px cyan;
 }
